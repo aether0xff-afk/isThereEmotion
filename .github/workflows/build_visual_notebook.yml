@@ -1,0 +1,41 @@
+name: Build notebook visualizations
+
+on:
+  push:
+    paths:
+      - "tools/build_visual_notebook.py"
+      - ".github/workflows/build_visual_notebook.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: false
+
+      - name: Generate notebook
+        run: |
+          python tools/build_visual_notebook.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          obj = json.loads(Path('isThereEmotion.ipynb').read_text(encoding='utf-8'))
+          assert obj['nbformat'] == 4
+          assert len(obj['cells']) >= 20
+          print('validated notebook cells:', len(obj['cells']))
+          PY
+
+      - name: Commit final notebook and clean builder
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm tools/build_visual_notebook.py .github/workflows/build_visual_notebook.yml
+          git add isThereEmotion.ipynb requirements.txt
+          git commit -m "feat: add notebook visualizations"
+          git push origin HEAD:main
