@@ -1,3 +1,4 @@
+# This workflow copies the raw TRACE dataset into this repository so the analysis remains independent.
 name: Import raw TRACE dataset
 
 on:
